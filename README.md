@@ -1,5 +1,7 @@
 # UAV Image Restoration (Classical, from scratch)
 
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)
+
 Classical (non-deep-learning) image restoration implemented from scratch with
 NumPy. This project accompanies the report
 *Classical Image Restoration for UAV Imaging* (see `docs/`) and is split into
