@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Jupyter
+.ipynb_checkpoints/
+
+# User-supplied data (keep the folder, ignore its contents)
+data/*
+!data/.gitkeep
+
+# Generated image outputs
+*.png
+
+# OS
+.DS_Store
