@@ -52,11 +52,20 @@ def parse_args():
         action="store_true",
         help="Do not open an interactive Matplotlib window.",
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed numpy RNG for reproducible noise synthesis.",
+    )
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
+
+    if args.seed is not None:
+        np.random.seed(args.seed)
 
     if not os.path.isfile(args.image):
         sys.exit(

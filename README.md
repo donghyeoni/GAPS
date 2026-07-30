@@ -23,13 +23,13 @@ and color conversion, and Matplotlib only for visualization.
 
 ## Dataset
 
-The experiments use two single test images, loaded from local paths:
+The original notebooks used two local test images (`lena.bmp` for denoising and
+a UAV frame `4611.png` for reconstruction). Neither is redistributed here.
 
-- `lena.bmp`  - used by the denoising part.
-- `4611.png`  - a UAV/aerial image used by the reconstruction part.
-
-**These images are not included in this repository.** Drop your own image into
-the `data/` folder and point the scripts at it with `--image`, for example:
+To keep the pipeline **reproducible with no external data**, `run_all.py`
+synthesizes a deterministic 512x512 test image (fixed seed) and runs both scripts
+on it with `--seed 0` — the committed results under `results/` are produced this
+way and are byte-stable across runs. You can still pass your own image:
 
 ```bash
 python scripts/01_denoising.py --image data/lena.bmp
@@ -53,15 +53,16 @@ uav-image-restoration/
 │   │                          #   restoration1/2/3()
 │   └── patch_select.py        # random / gradient / frequency (FFT) / laplacian choose
 ├── scripts/
-│   ├── 01_denoising.py        # reproduces Notebook 1
-│   └── 02_reconstruction.py   # reproduces Notebook 2 (baseline vs ours + PSNR)
-├── notebooks/                 # original Colab notebooks (unmodified)
-│   ├── Img_Project_1.ipynb
-│   └── Img_Project_2.ipynb
+│   ├── 01_denoising.py        # denoising: noise synthesis + classical filters + PSNR
+│   └── 02_reconstruction.py   # bandwidth-limited reconstruction (baseline vs ours + PSNR)
+├── run_all.py                 # synthesize a 512x512 image + run both scripts -> results/
+├── results/                   # committed artifacts: logs, figures, synthetic input
+│   └── notebook_reference/    # figures/logs preserved from the original notebooks
 ├── docs/
 │   └── Classical Image Restoration for UAV Imaging.pdf
-├── data/                      # put your own test image(s) here (git-ignored)
+├── data/                      # optional: your own test image(s) here (git-ignored)
 ├── requirements.txt
+├── RESULTS.md
 ├── .gitignore
 └── README.md
 ```
@@ -81,7 +82,14 @@ Requires Python 3.8+ and the packages in `requirements.txt`
 
 ## Usage
 
-Denoising demo (synthesizes noise, denoises, prints PSNR, shows figures):
+Reproduce all committed results on a synthetic image (no data needed):
+
+```bash
+python run_all.py        # writes results/ (logs + figure), see RESULTS.md
+```
+
+Or run the scripts individually. Denoising demo (synthesizes noise, denoises,
+prints PSNR, shows figures):
 
 ```bash
 python scripts/01_denoising.py --image data/lena.bmp
@@ -120,5 +128,8 @@ print(psnr(img, clean))
   has been dropped in the modular code.
 - The patch-selection scoring functions convert to grayscale via OpenCV's
   `COLOR_BGR2GRAY`, matching the original notebooks.
-- Results depend on NumPy's random state (noise synthesis and random patch
-  selection are stochastic); set a seed if you need reproducible numbers.
+- Noise synthesis and random patch selection are stochastic; both scripts now
+  accept `--seed` (used by `run_all.py`) so the committed results are
+  reproducible.
+- The original notebooks have been removed; their embedded figures/logs are
+  preserved under `results/notebook_reference/`.

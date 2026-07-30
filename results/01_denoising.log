@@ -1,0 +1,6 @@
+PSNR (dB):
+  Median    (on Gaussian sigma=50) : 15.60
+  Averaging (on impulse p=0.10)    : 22.64
+  Gaussian  (on impulse p=0.10)    : 22.64
+  Bilateral (on Gaussian sigma=50) : 17.11
+Saved figure to C:\Users\SSAFY\Desktop\git_upload\uav-image-restoration\results\01_denoising.png

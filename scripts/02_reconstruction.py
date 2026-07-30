@@ -22,6 +22,7 @@ import os
 import sys
 
 import cv2
+import numpy as np
 
 # Make the `restoration` package importable when run from the repo root.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -59,6 +60,12 @@ def parse_args():
         type=int,
         default=K_BASE,
         help="Patch (grid) side length (default: %(default)s).",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed numpy RNG for reproducible random patch selection.",
     )
     return parser.parse_args()
 
@@ -102,6 +109,9 @@ def run_ours(image_512, image_256, image_128, image_high_up, k):
 
 def main():
     args = parse_args()
+
+    if args.seed is not None:
+        np.random.seed(args.seed)
 
     if not os.path.isfile(args.image):
         sys.exit(

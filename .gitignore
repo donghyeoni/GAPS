@@ -2,6 +2,10 @@
 __pycache__/
 *.py[cod]
 
+# Virtual environment
+.venv/
+venv/
+
 # Jupyter
 .ipynb_checkpoints/
 
@@ -9,8 +13,9 @@ __pycache__/
 data/*
 !data/.gitkeep
 
-# Generated image outputs
+# Generated image outputs (but keep committed results/ artifacts)
 *.png
+!results/**
 
 # OS
 .DS_Store

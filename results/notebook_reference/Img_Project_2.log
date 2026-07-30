@@ -1,0 +1,9 @@
+[cell 01 stream stdout]
+Drive already mounted at /content/drive; to attempt to forcibly remount, call drive.mount("/content/drive", force_remount=True).
+
+[cell 15 stream stdout]
+29.417593645881812 24.383815230102577
+
+[cell 16 stream stdout]
+32.68298407498561
+25.805439879296344
