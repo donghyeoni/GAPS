@@ -42,4 +42,11 @@ the random-patch bilinear baseline at both pyramid levels — most clearly at th
 ## Original notebook figures
 
 Figures/logs embedded in the original notebooks are preserved under
-[`results/notebook_reference/`](results/notebook_reference/) for provenance.
+[`results/notebook_reference/`](results/notebook_reference/) for provenance —
+`Img_Project_1__*` (4 figures: noise synthesis, and per-filter PSNR
+comparisons) and `Img_Project_2__*` (7 figures: the 512/256/128 pyramid, the
+hand-written bicubic interpolation, entropy-ranked top-64 grid selection and
+the reconstructions), alongside the two run logs. These
+are the *original* runs on the project's own imagery; the tables above come
+from the reproducible synthetic pipeline, so the numbers are not directly
+comparable.
