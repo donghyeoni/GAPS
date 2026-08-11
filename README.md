@@ -1,48 +1,98 @@
-# UAV Image Restoration (Classical, from scratch)
+# GAPS
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)
 
-Classical (non-deep-learning) image restoration implemented from scratch with
-NumPy. This project accompanies the report
-*Classical Image Restoration for UAV Imaging* (see `docs/`) and is split into
-two parts:
+**GAPS (Gradient-Aware Patch Selection)** — classical (non-deep-learning) image
+restoration for UAV imaging, implemented from scratch with NumPy. The name is
+the proposed method: under a limited transmission budget, patches are selected
+by gradient energy and the untransmitted *gaps* are filled by a custom forward
+interpolation. This project accompanies the report
+*Classical Image Restoration for UAV Imaging* (see `docs/`) and has two parts:
 
-1. **Denoising** - synthesize Gaussian and salt-and-pepper (impulse) noise,
-   then remove it with hand-coded **median**, **averaging**, **Gaussian**, and
-   **bilateral** filters. Quality is measured with PSNR.
+1. **Denoising** — synthesize Gaussian and salt-and-pepper (impulse) noise,
+   then apply every hand-coded filter (**median**, **averaging**, **Gaussian**,
+   **bilateral**) to every noise type and report the full PSNR matrix.
 
-2. **Bandwidth-limited reconstruction** - build an image pyramid
-   (512 -> 256 -> 128), transmit only a budgeted subset of patches, and
-   reconstruct the full-resolution image via interpolation. A **baseline**
+2. **Bandwidth-limited reconstruction** — build an image pyramid
+   (512 → 256 → 128), transmit only a budgeted subset of patches per level,
+   and reconstruct the full-resolution image. A **baseline**
    (random patch selection + bilinear interpolation) is compared against
-   **ours** (gradient / FFT-energy / Laplacian-pyramid patch selection plus a
-   custom forward interpolation), scored by PSNR.
+   **ours / GAPS** (gradient-based patch selection + sparse expand and
+   neighborhood-weighted fill), scored by PSNR at both pyramid levels.
 
 All numerical work is hand-written in NumPy. OpenCV is used only for image I/O
 and color conversion, and Matplotlib only for visualization.
 
-## Dataset
+## Results
 
-The original notebooks used two local test images (`lena.bmp` for denoising and
-a UAV frame `4611.png` for reconstruction). Neither is redistributed here.
+Both scripts run on the committed deterministic 512×512 synthetic test image
+([`results/input_synthetic.png`](results/input_synthetic.png)) with `--seed 0`,
+so every number below is reproducible with the commands in **Usage**.
 
-To keep the pipeline **reproducible with no external data**, `run_all.py`
-synthesizes a deterministic 512x512 test image (fixed seed) and runs both scripts
-on it with `--seed 0` — the committed results under `results/` are produced this
-way and are byte-stable across runs. You can still pass your own image:
+### 1. Denoising (PSNR, dB — higher is better)
+
+Every filter applied to every noise type. The matrix shows each filter's
+specialty rather than a single cherry-picked pairing:
+
+| Filter | Gaussian σ=50 | Impulse p=0.10 |
+| --- | ---: | ---: |
+| Noisy (no filter) | 15.07 | 14.87 |
+| Median 5×5 | 15.60 | **38.03** |
+| Averaging 3×3 | **22.79** | 22.66 |
+| Gaussian 3×3 σ=1 | 22.60 | 22.46 |
+| Bilateral 5×5 | 17.12 | 14.94 |
+
+![denoising PSNR](results/psnr_denoising.png)
+
+- The **median** filter (implemented with 0/255 impulse detection) is the clear
+  impulse-noise specialist: **+23.2 dB** over the noisy input, while leaving
+  Gaussian noise almost untouched.
+- **Linear smoothing** (averaging / Gaussian kernel) is the better choice for
+  Gaussian noise (~+7.6 dB) but cannot remove impulse outliers.
+- The **bilateral** filter preserves edges by design; with a conservative range
+  sigma it trades PSNR for edge sharpness on this heavy (σ=50) noise.
+
+Visual comparison (top row: Gaussian noise, bottom row: impulse noise):
+
+![denoising figures](results/01_denoising.png)
+
+### 2. Bandwidth-limited reconstruction (PSNR, dB)
+
+Image pyramid 512 → 256 → 128 with an equal transmission budget per level
+(2¹⁴ pixels, 4×4 patches). GAPS selects patches by gradient energy — scored on
+the receiver-side upsample, so the selection needs no extra side channel — and
+fills the gaps with sparse expand + neighborhood-weighted interpolation:
+
+| Pipeline | 256 level | 512 level |
+| --- | ---: | ---: |
+| Baseline (random patches + bilinear) | 35.07 | 27.82 |
+| **Ours / GAPS** (gradient patches + custom fill) | **40.89** | **30.20** |
+
+![reconstruction PSNR](results/psnr_reconstruction.png)
+
+GAPS beats the equal-budget baseline at both pyramid levels: **+5.8 dB** at
+256 and **+2.4 dB** at 512.
+
+## Test image
+
+The original report used two local test images (`lena.bmp` for denoising and a
+UAV frame `4611.png` for reconstruction); neither is redistributed here. To
+keep the pipeline reproducible with no external data, a deterministic 512×512
+synthetic image is committed at `results/input_synthetic.png` and used as the
+default input. You can still pass your own image:
 
 ```bash
-python scripts/01_denoising.py --image data/lena.bmp
-python scripts/02_reconstruction.py --image data/4611.png
+python scripts/01_denoising.py --image data/your_image.png
+python scripts/02_reconstruction.py --image data/your_uav_frame.png
 ```
 
 Any RGB image works. For the reconstruction demo a roughly square image
-(e.g. 512x512) matches the 512 -> 256 -> 128 pyramid most cleanly.
+(e.g. 512×512) matches the 512 → 256 → 128 pyramid most cleanly.
 
 ## Structure
 
 ```
-uav-image-restoration/
+GAPS/
 ├── restoration/               # reusable library (NumPy implementations)
 │   ├── __init__.py
 │   ├── metrics.py             # psnr()
@@ -53,16 +103,13 @@ uav-image-restoration/
 │   │                          #   restoration1/2/3()
 │   └── patch_select.py        # random / gradient / frequency (FFT) / laplacian choose
 ├── scripts/
-│   ├── 01_denoising.py        # denoising: noise synthesis + classical filters + PSNR
+│   ├── 01_denoising.py        # denoising benchmark: 4 filters x 2 noise types + PSNR
 │   └── 02_reconstruction.py   # bandwidth-limited reconstruction (baseline vs ours + PSNR)
-├── run_all.py                 # synthesize a 512x512 image + run both scripts -> results/
-├── results/                   # committed artifacts: logs, figures, synthetic input
-│   └── notebook_reference/    # figures/logs preserved from the original notebooks
+├── results/                   # committed artifacts: input image, figures, PSNR charts
 ├── docs/
 │   └── Classical Image Restoration for UAV Imaging.pdf
 ├── data/                      # optional: your own test image(s) here (git-ignored)
 ├── requirements.txt
-├── RESULTS.md
 ├── .gitignore
 └── README.md
 ```
@@ -82,26 +129,11 @@ Requires Python 3.8+ and the packages in `requirements.txt`
 
 ## Usage
 
-Reproduce all committed results on a synthetic image (no data needed):
+Reproduce the committed results (defaults to the committed synthetic image):
 
 ```bash
-python run_all.py        # writes results/ (logs + figure), see RESULTS.md
-```
-
-Or run the scripts individually. Denoising demo (synthesizes noise, denoises,
-prints PSNR, shows figures):
-
-```bash
-python scripts/01_denoising.py --image data/lena.bmp
-# save the result figure and skip the interactive window:
-python scripts/01_denoising.py --image data/lena.bmp --save result.png --no-show
-```
-
-Reconstruction demo (baseline vs ours, prints a PSNR table):
-
-```bash
-python scripts/02_reconstruction.py --image data/4611.png
-python scripts/02_reconstruction.py --image data/4611.png --patch-size 4
+python scripts/01_denoising.py --seed 0 --save results/01_denoising.png --no-show
+python scripts/02_reconstruction.py --seed 0
 ```
 
 Using the library directly:
@@ -110,7 +142,7 @@ Using the library directly:
 import cv2
 from restoration import g_noise, median_filter, psnr
 
-img = cv2.cvtColor(cv2.imread("data/lena.bmp"), cv2.COLOR_BGR2RGB)
+img = cv2.cvtColor(cv2.imread("data/your_image.png"), cv2.COLOR_BGR2RGB)
 noisy = g_noise(img, 50)
 clean = median_filter(noisy, 5)
 print(psnr(img, clean))
@@ -122,14 +154,10 @@ print(psnr(img, clean))
   explicit Python loops over pixels, so they can be slow on large images.
 - The `psnr` function assumes a max value of 1.0 for floating-point images and
   255.0 for integer images.
-- The `psnr` implementation was duplicated across the two original notebooks;
-  it is defined once here in `restoration/metrics.py`.
-- The original notebooks imported `torch`, but it was never used; that import
-  has been dropped in the modular code.
-- The patch-selection scoring functions convert to grayscale via OpenCV's
-  `COLOR_BGR2GRAY`, matching the original notebooks.
-- Noise synthesis and random patch selection are stochastic; both scripts now
-  accept `--seed` (used by `run_all.py`) so the committed results are
-  reproducible.
-- The original notebooks have been removed; their embedded figures/logs are
-  preserved under `results/notebook_reference/`.
+- The median filter is an impulse-detection variant: it replaces only pixels
+  whose value is exactly 0 or 255, which is why it barely changes
+  Gaussian-noisy images.
+- Noise synthesis and random patch selection are stochastic; both scripts
+  accept `--seed`, and the committed results use `--seed 0`.
+- Other patch selectors (frequency / Laplacian) are available in
+  `restoration.patch_select` for experimentation.
