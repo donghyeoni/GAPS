@@ -78,19 +78,26 @@ Selected patches per level — what each method actually transmits
 
 ![patch selection](results/patch_selection.png)
 
-Result — equal budget, better placement and better fill:
+Every selection × fill combination under the same budget — each cell is
+`256 / 512` PSNR in dB; **random + bilinear is the baseline**, everything
+else is ours:
 
-| Pipeline | 256 level | 512 level |
-| --- | ---: | ---: |
-| Baseline (random patches + bilinear) | 28.01 | 23.39 |
-| **Ours / GAPS** (gradient patches + custom fill) | **33.30** | **26.60** |
+| Selection \ Fill | Bilinear | Bicubic | Forward |
+| --- | ---: | ---: | ---: |
+| Random | 28.01 / 23.39 *(baseline)* | 28.52 / 23.63 | 28.12 / 23.55 |
+| Frequency | 28.03 / 23.24 | 28.52 / 23.47 | 27.96 / 23.25 |
+| Laplacian | 28.38 / 23.67 | 28.91 / 23.90 | 28.51 / 23.79 |
+| Gradient | 33.43 / 26.54 | **33.96 / 26.77** | 33.30 / 26.60 |
 
-GAPS beats the equal-budget baseline at both pyramid levels: **+5.3 dB** at
-256 and **+3.2 dB** at 512.
+The best combination, **gradient selection + bicubic fill**, beats the
+baseline by **+6.0 dB** at 256 and **+3.4 dB** at 512. Selection matters far
+more than the fill: gradient selection lifts every fill by ~5 dB, while
+fill choice moves the result by a few tenths.
 
-Visual comparison at the 512 level (bottom row: zoomed crop):
+Reconstruction progression — from the 128 base to the final 512 image,
+baseline (top row) vs the best ours (bottom row):
 
-![reconstruction comparison](results/reconstruction_comparison.png)
+![reconstruction progression](results/reconstruction_progression.png)
 
 ## Test image
 
@@ -113,8 +120,19 @@ GAPS/
 │   │                          #   restoration1/2/3()
 │   └── patch_select.py        # random / gradient / frequency (FFT) / laplacian choose
 ├── scripts/
-│   ├── 01_denoising.py        # denoising benchmark: 4 filters x 2 noise types + PSNR
-│   └── 02_reconstruction.py   # bandwidth-limited reconstruction (baseline vs ours + PSNR)
+│   ├── denoising/             # one demo per filter (+ _common.py helpers)
+│   │   ├── median_filter.py
+│   │   ├── averaging_filter.py
+│   │   ├── gaussian_filter.py
+│   │   └── bilateral_filter.py
+│   └── enhancement/           # one demo per method (+ _common.py pipeline)
+│       ├── baseline.py                # random selection + bilinear (baseline)
+│       ├── bicubic_interpolation.py   # ours: interpolation 1
+│       ├── forward_interpolation.py   # ours: interpolation 2
+│       ├── frequency_selection.py     # ours: selection 1 (FFT energy)
+│       ├── laplacian_selection.py     # ours: selection 2 (Laplacian residual)
+│       ├── gradient_selection.py      # ours: selection 3 (gradient magnitude)
+│       └── benchmark.py               # every selection x fill -> table + figures
 ├── results/                   # committed artifacts: input image, figures, PSNR charts
 ├── docs/
 │   └── Classical Image Restoration for UAV Imaging.pdf
@@ -139,11 +157,31 @@ Requires Python 3.8+ and the packages in `requirements.txt`
 
 ## Usage
 
-Reproduce the committed results (defaults to the committed test photo):
+Denoising demos — one script per filter (defaults to the committed test photo):
 
 ```bash
-python scripts/01_denoising.py --seed 0 --no-show
-python scripts/02_reconstruction.py --seed 0 --save results/reconstruction_comparison.png --save-patches results/patch_selection.png
+python scripts/denoising/median_filter.py --seed 0
+python scripts/denoising/averaging_filter.py --seed 0
+python scripts/denoising/gaussian_filter.py --seed 0
+python scripts/denoising/bilateral_filter.py --seed 0
+```
+
+Enhancement demos — one script per method:
+
+```bash
+python scripts/enhancement/baseline.py --seed 0
+python scripts/enhancement/bicubic_interpolation.py --seed 0
+python scripts/enhancement/forward_interpolation.py --seed 0
+python scripts/enhancement/frequency_selection.py --seed 0
+python scripts/enhancement/laplacian_selection.py --seed 0
+python scripts/enhancement/gradient_selection.py --seed 0
+```
+
+Reproduce the full Results table and figures (pure-Python loops — takes tens
+of minutes):
+
+```bash
+python scripts/enhancement/benchmark.py --seed 0 --save results/reconstruction_progression.png --save-patches results/patch_selection.png
 ```
 
 Using the library directly:

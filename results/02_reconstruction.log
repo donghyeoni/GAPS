@@ -1,9 +1,27 @@
 Pyramid sizes: (512, 512, 3) -> (256, 256, 3) -> (128, 128, 3)
 Patch size: 4
 
-PSNR (dB) -- higher is better:
-               256 level   512 level
-  Baseline         28.01       23.39
-  Ours             33.30       26.60
+  random     + bilinear  : 256  28.01  512  23.39 (baseline)
+  random     + bicubic   : 256  28.52  512  23.63
+  random     + forward   : 256  28.12  512  23.55
+  frequency  + bilinear  : 256  28.03  512  23.24
+  frequency  + bicubic   : 256  28.52  512  23.47
+  frequency  + forward   : 256  27.96  512  23.25
+  laplacian  + bilinear  : 256  28.38  512  23.67
+  laplacian  + bicubic   : 256  28.91  512  23.90
+  laplacian  + forward   : 256  28.51  512  23.79
+  gradient   + bilinear  : 256  33.43  512  26.54
+  gradient   + bicubic   : 256  33.96  512  26.77
+  gradient   + forward   : 256  33.30  512  26.60
+
+PSNR (dB) -- selection x fill, '256 / 512', higher is better:
+                     bilinear         bicubic         forward
+  random       28.01 / 23.39   28.52 / 23.63   28.12 / 23.55 
+  frequency    28.03 / 23.24   28.52 / 23.47   27.96 / 23.25 
+  laplacian    28.38 / 23.67   28.91 / 23.90   28.51 / 23.79 
+  gradient     33.43 / 26.54   33.96 / 26.77   33.30 / 26.60 
+
+Baseline (random + bilinear): 256 28.01  512 23.39
+Best ours (gradient + bicubic): 256 33.96  512 26.77
+Saved figure to results\reconstruction_progression.png
 Saved figure to results\patch_selection.png
-Saved figure to results\reconstruction_comparison.png
