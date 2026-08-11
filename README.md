@@ -136,7 +136,7 @@ Requires Python 3.8+ and the packages in `requirements.txt`
 
 ## Usage
 
-Reproduce the committed results (defaults to the committed synthetic image):
+Reproduce the committed results (defaults to the committed test photo):
 
 ```bash
 python scripts/01_denoising.py --seed 0 --save results/01_denoising.png --no-show
