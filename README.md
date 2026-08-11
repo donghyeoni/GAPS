@@ -42,7 +42,7 @@ specialty rather than a single cherry-picked pairing:
 | Gaussian 3×3 σ=1 | 22.71 | 22.09 |
 | Bilateral 5×5 | 17.37 | 14.72 |
 
-![denoising PSNR](results/psnr_denoising.png)
+![denoising PSNR](results/chart_denoising_psnr.png)
 
 - The **median** filter (implemented with 0/255 impulse detection) is the clear
   impulse-noise specialist: **+21.5 dB** over the noisy input, while leaving
@@ -54,7 +54,7 @@ specialty rather than a single cherry-picked pairing:
 
 Visual comparison (top row: Gaussian noise, bottom row: impulse noise):
 
-![denoising figures](results/01_denoising.png)
+![denoising figures](results/denoising_comparison.png)
 
 ### 2. Bandwidth-limited reconstruction (PSNR, dB)
 
@@ -68,7 +68,7 @@ fills the gaps with sparse expand + neighborhood-weighted interpolation:
 | Baseline (random patches + bilinear) | 28.01 | 23.39 |
 | **Ours / GAPS** (gradient patches + custom fill) | **33.30** | **26.60** |
 
-![reconstruction PSNR](results/psnr_reconstruction.png)
+![reconstruction PSNR](results/chart_reconstruction_psnr.png)
 
 GAPS beats the equal-budget baseline at both pyramid levels: **+5.3 dB** at
 256 and **+3.2 dB** at 512.
@@ -139,7 +139,7 @@ Requires Python 3.8+ and the packages in `requirements.txt`
 Reproduce the committed results (defaults to the committed test photo):
 
 ```bash
-python scripts/01_denoising.py --seed 0 --save results/01_denoising.png --no-show
+python scripts/01_denoising.py --seed 0 --save results/denoising_comparison.png --no-show
 python scripts/02_reconstruction.py --seed 0
 ```
 
