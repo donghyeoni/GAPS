@@ -1,4 +1,4 @@
-"""Reproduce Notebook 2: bandwidth-limited image reconstruction.
+"""Bandwidth-limited image reconstruction benchmark.
 
 Builds an image pyramid (512 -> 256 -> 128), transmits only a budgeted subset
 of patches at each level, and reconstructs the full-resolution image.
@@ -7,14 +7,16 @@ Two pipelines are compared and scored with PSNR:
 
 - Baseline : random patch selection + bilinear interpolation.
 - Ours     : gradient-based patch selection + custom forward interpolation
-             (sparse expand/assemble followed by neighborhood-weighted fill).
+             (sparse expand/assemble followed by neighborhood-weighted fill),
+             applied at both the 256 and 512 levels.
 
 Other patch selectors (frequency / Laplacian) are available in
 ``restoration.patch_select`` for experimentation.
 
 Usage
 -----
-    python scripts/02_reconstruction.py --image data/4611.png
+    python scripts/02_reconstruction.py --seed 0
+    python scripts/02_reconstruction.py --image data/your_uav_frame.png --patch-size 4
 """
 
 import argparse
@@ -39,8 +41,8 @@ from restoration import (
     gradient_choose,
 )
 
-# Default image path (drop your own image into data/).
-DEFAULT_IMAGE = os.path.join("data", "4611.png")
+# Default: the committed deterministic 512x512 synthetic test image.
+DEFAULT_IMAGE = os.path.join("results", "input_synthetic.png")
 
 # Patch (grid) size shared by both pipelines.
 K_BASE = 4
@@ -86,20 +88,17 @@ def run_baseline(image_512, image_256, image_128, k):
 
 def run_ours(image_512, image_256, image_128, image_high_up, k):
     """Gradient-based selection + custom forward interpolation."""
-    image_low = random_choose(image_512, k)
-
     # Level 128 -> 256: gradient-selected detail patches over a sparse base.
     g1 = gradient_choose(image_high_up, image_256, k)
     img_sparse = expand(image_128)
     img_combined = assemble(g1, img_sparse)
     image_re_256_m2 = restoration3(img_combined)
 
-    # Level 256 -> 512.
+    # Level 256 -> 512: same scheme, scored on the receiver-side upsample.
     image_re_256_m2_up = bilinear(image_re_256_m2)
     img_sparse2 = expand(image_re_256_m2)
-    # (Detail scoring at the higher level; kept as in the original notebook.)
-    _g2 = gradient_choose(image_re_256_m2_up, image_512, k)
-    img_combined2 = assemble(image_low, img_sparse2)
+    g2 = gradient_choose(image_re_256_m2_up, image_512, k)
+    img_combined2 = assemble(g2, img_sparse2)
     image_re_512_m2 = restoration3(img_combined2)
 
     p1 = psnr(image_256, image_re_256_m2)

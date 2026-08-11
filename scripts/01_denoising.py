@@ -1,13 +1,14 @@
-"""Reproduce Notebook 1: noise synthesis + classical denoising.
+"""Classical denoising benchmark.
 
-Synthesizes Gaussian and salt-and-pepper noise on a test image, then removes
-it with hand-coded median / averaging / Gaussian / bilateral filters and
-reports the PSNR of each result.
+Synthesizes Gaussian (sigma=50) and salt-and-pepper (p=0.10) noise on a test
+image, then applies every hand-coded filter (median / averaging / Gaussian /
+bilateral) to every noise type and reports the full PSNR matrix, so each
+filter's strength and weakness per noise type is visible.
 
 Usage
 -----
-    python scripts/01_denoising.py --image data/lena.bmp
-    python scripts/01_denoising.py --image data/lena.bmp --save out.png --no-show
+    python scripts/01_denoising.py --seed 0 --save results/01_denoising.png --no-show
+    python scripts/01_denoising.py --image data/your_uav_frame.png
 """
 
 import argparse
@@ -31,8 +32,8 @@ from restoration import (
     bilateral_filter,
 )
 
-# Default image path (drop your own image into data/).
-DEFAULT_IMAGE = os.path.join("data", "lena.bmp")
+# Default: the committed deterministic 512x512 synthetic test image.
+DEFAULT_IMAGE = os.path.join("results", "input_synthetic.png")
 
 
 def parse_args():
@@ -80,64 +81,47 @@ def main():
     image_original = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     # --- Synthesize noisy versions -------------------------------------
-    g10 = g_noise(image_original, 10)
-    g30 = g_noise(image_original, 30)
-    g50 = g_noise(image_original, 50)
-    i01 = i_noise(image_original, 0.1)
-    i005 = i_noise(image_original, 0.05)
+    noise_cases = [
+        ("Gaussian s=50", g_noise(image_original, 50)),
+        ("Impulse p=0.10", i_noise(image_original, 0.1)),
+    ]
 
-    # --- Apply filters and score with PSNR -----------------------------
-    median_filtered = median_filter(g50, 5)
-    psnr_median = psnr(image_original, median_filtered)
+    # --- Apply every filter to every noise type and score with PSNR ----
+    filters = [
+        ("Median 5x5", lambda im: median_filter(im, 5)),
+        ("Averaging 3x3", lambda im: averaging_filter(im, 3)),
+        ("Gaussian 3x3 s=1", lambda im: gaussian_filter(im, 3, 1.0)),
+        ("Bilateral 5x5", lambda im: bilateral_filter(im, 5, 30, 15)),
+    ]
 
-    averaging_filtered = averaging_filter(i01, 3)
-    psnr_averaging = psnr(image_original, averaging_filtered)
+    results = {}  # {noise_name: [("Noisy", img, psnr), (filter_name, img, psnr), ...]}
+    for noise_name, noisy in noise_cases:
+        rows = [("Noisy", noisy, psnr(image_original, noisy))]
+        for filter_name, fn in filters:
+            out = fn(noisy)
+            rows.append((filter_name, out, psnr(image_original, out)))
+        results[noise_name] = rows
 
-    gaussian_filtered = gaussian_filter(i01, 3, 15)
-    psnr_gaussian = psnr(image_original, gaussian_filtered)
+    print("PSNR (dB) -- higher is better:")
+    header = f"  {'':<18}" + "".join(f"{n:>18}" for n, _ in noise_cases)
+    print(header)
+    labels = [r[0] for r in results[noise_cases[0][0]]]
+    for i, label in enumerate(labels):
+        line = f"  {label:<18}"
+        for noise_name, _ in noise_cases:
+            line += f"{results[noise_name][i][2]:>18.2f}"
+        print(line)
 
-    bilateral_filtered = bilateral_filter(g50, 5, 30, 15)
-    psnr_bilateral = psnr(image_original, bilateral_filtered)
-
-    print("PSNR (dB):")
-    print(f"  Median    (on Gaussian sigma=50) : {psnr_median:.2f}")
-    print(f"  Averaging (on impulse p=0.10)    : {psnr_averaging:.2f}")
-    print(f"  Gaussian  (on impulse p=0.10)    : {psnr_gaussian:.2f}")
-    print(f"  Bilateral (on Gaussian sigma=50) : {psnr_bilateral:.2f}")
-
-    # --- Visualize noisy images ----------------------------------------
-    plt.figure(figsize=(12, 4))
-    for idx, (img, name) in enumerate(
-        [
-            (g10, "Gaussian sigma=10"),
-            (g30, "Gaussian sigma=30"),
-            (g50, "Gaussian sigma=50"),
-            (i01, "Impulse p=0.10"),
-            (i005, "Impulse p=0.05"),
-        ],
-        start=1,
-    ):
-        plt.subplot(1, 5, idx)
-        plt.imshow(img)
-        plt.title(name, fontsize=9)
-        plt.axis("off")
-    plt.tight_layout()
-
-    # --- Visualize denoised results ------------------------------------
-    plt.figure(figsize=(12, 4))
-    for idx, (img, title) in enumerate(
-        [
-            (median_filtered, f"Median\nPSNR: {psnr_median:.2f} dB"),
-            (averaging_filtered, f"Averaging\nPSNR: {psnr_averaging:.2f} dB"),
-            (gaussian_filtered, f"Gaussian\nPSNR: {psnr_gaussian:.2f} dB"),
-            (bilateral_filtered, f"Bilateral\nPSNR: {psnr_bilateral:.2f} dB"),
-        ],
-        start=1,
-    ):
-        plt.subplot(1, 4, idx)
-        plt.imshow(img)
-        plt.title(title)
-        plt.axis("off")
+    # --- Visualize: one row per noise type ------------------------------
+    n_rows = len(noise_cases)
+    n_cols = len(labels)
+    plt.figure(figsize=(3 * n_cols, 3.2 * n_rows))
+    for r, (noise_name, _) in enumerate(noise_cases):
+        for c, (name, img, val) in enumerate(results[noise_name]):
+            plt.subplot(n_rows, n_cols, r * n_cols + c + 1)
+            plt.imshow(img)
+            plt.title(f"{noise_name}\n{name}: {val:.2f} dB", fontsize=9)
+            plt.axis("off")
     plt.tight_layout()
 
     if args.save:
