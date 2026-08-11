@@ -63,33 +63,15 @@ fills the gaps with sparse expand + neighborhood-weighted interpolation:
 | Baseline (random patches + bilinear) | 28.01 | 23.39 |
 | **Ours / GAPS** (gradient patches + custom fill) | **33.30** | **26.60** |
 
-![reconstruction PSNR](results/chart_reconstruction_psnr.png)
-
 GAPS beats the equal-budget baseline at both pyramid levels: **+5.3 dB** at
 256 and **+3.2 dB** at 512.
 
 ## Test image
 
-The original report used two local test images (`lena.bmp` for denoising and a
-UAV frame `4611.png` for reconstruction); neither is redistributed here. To
-keep the pipeline reproducible with no external data, a 512×512 test photo
-(center-cropped and resized) is committed at `results/input_dog.png` and used
-as the default input.
-
 > `results/input_dog.png` is the author's own photograph — © 2026 donghyeoni,
 > all rights reserved. It is included in this repository only as a benchmark
 > test input and is **not** covered by the MIT license, which applies to the
 > code.
-
-You can still pass your own image:
-
-```bash
-python scripts/01_denoising.py --image data/your_image.png
-python scripts/02_reconstruction.py --image data/your_uav_frame.png
-```
-
-Any RGB image works. For the reconstruction demo a roughly square image
-(e.g. 512×512) matches the 512 → 256 → 128 pyramid most cleanly.
 
 ## Structure
 
