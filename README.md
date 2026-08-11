@@ -73,6 +73,11 @@ number here is reproducible with the commands in **Usage**.
   nearest actual measurements, whether they came from the base or from a
   transmitted patch.
 
+Selected patches per level — what each method actually transmits
+(left: 128→256 stage, right: 256→512 stage):
+
+![patch selection](results/patch_selection.png)
+
 Result — equal budget, better placement and better fill:
 
 | Pipeline | 256 level | 512 level |
@@ -138,7 +143,7 @@ Reproduce the committed results (defaults to the committed test photo):
 
 ```bash
 python scripts/01_denoising.py --seed 0 --no-show
-python scripts/02_reconstruction.py --seed 0 --save results/reconstruction_comparison.png
+python scripts/02_reconstruction.py --seed 0 --save results/reconstruction_comparison.png --save-patches results/patch_selection.png
 ```
 
 Using the library directly:
