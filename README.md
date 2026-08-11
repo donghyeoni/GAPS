@@ -25,32 +25,34 @@ and color conversion, and Matplotlib only for visualization.
 
 ## Results
 
-Both scripts run on the committed 512×512 test photo
-([`results/input_dog.png`](results/input_dog.png)) with `--seed 0`,
-so every number below is reproducible with the commands in **Usage**.
-
 ### 1. Denoising (PSNR, dB — higher is better)
 
-Every filter applied to every noise type. The matrix shows each filter's
-specialty rather than a single cherry-picked pairing:
+**Kernel 3×3** (Gaussian/Bilateral spatial std = 15)
 
-| Noise | Noisy (no filter) | Median 5×5 | Averaging 3×3 | Gaussian 3×3 σ=1 | Bilateral 5×5 |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Gaussian σ=50 | 15.37 | 15.88 | **22.75** | 22.71 | 17.37 |
-| Impulse p=0.10 | 14.61 | **36.09** | 22.18 | 22.09 | 14.72 |
+| Noised image | Initial PSNR | Median | Averaging | Gaussian | Bilateral C=30 | Bilateral C=45 | Bilateral C=75 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Impulse p=0.05 | 18.20 | **43.92** | 26.19 | 26.19 | 19.24 | 20.64 | 22.33 |
+| Impulse p=0.1 | 15.17 | **39.19** | 23.44 | 23.44 | 15.26 | 16.64 | 18.93 |
+| Gaussian std=10 | 28.13 | 28.18 | 31.37 | 31.39 | **33.03** | 31.81 | 31.07 |
+| Gaussian std=30 | 18.86 | 19.08 | 26.86 | 26.86 | 22.25 | 25.90 | **27.97** |
+| Gaussian std=50 | 14.82 | 15.37 | **23.39** | **23.39** | 16.27 | 18.92 | 22.60 |
 
-- The **median** filter (implemented with 0/255 impulse detection) is the clear
-  impulse-noise specialist: **+21.5 dB** over the noisy input, while leaving
-  Gaussian noise almost untouched.
-- **Linear smoothing** (averaging / Gaussian kernel) is the better choice for
-  Gaussian noise (~+7.4 dB) but cannot remove impulse outliers.
-- The **bilateral** filter preserves edges by design; with a conservative range
-  sigma it trades PSNR for edge sharpness on this heavy (σ=50) noise.
+**Kernel 5×5** (Gaussian/Bilateral spatial std = 15)
+
+| Noised image | Initial PSNR | Median | Averaging | Gaussian | Bilateral C=30 | Bilateral C=45 | Bilateral C=75 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Impulse p=0.05 | 18.20 | **42.61** | 26.98 | 26.98 | 18.29 | 19.52 | 22.34 |
+| Impulse p=0.1 | 15.17 | **39.28** | 25.13 | 25.13 | 15.31 | 15.85 | 18.90 |
+| Gaussian std=10 | 28.13 | 28.17 | 28.99 | 29.00 | **32.75** | 31.81 | 30.55 |
+| Gaussian std=30 | 18.86 | 19.09 | 27.47 | 27.48 | 23.20 | 25.88 | **27.95** |
+| Gaussian std=50 | 14.82 | 15.42 | **25.38** | **25.38** | 16.83 | 18.93 | 22.63 |
 
 ### 2. Bandwidth-limited reconstruction (PSNR, dB)
 
 Image pyramid 512 → 256 → 128 with an equal transmission budget per level
-(2¹⁴ pixels, 4×4 patches).
+(2¹⁴ pixels, 4×4 patches), run on the committed 512×512 test photo
+([`results/input_dog.png`](results/input_dog.png)) with `--seed 0` — every
+number here is reproducible with the commands in **Usage**.
 
 **Why this design** — the rationale behind GAPS:
 
