@@ -34,13 +34,10 @@ so every number below is reproducible with the commands in **Usage**.
 Every filter applied to every noise type. The matrix shows each filter's
 specialty rather than a single cherry-picked pairing:
 
-| Filter | Gaussian σ=50 | Impulse p=0.10 |
-| --- | ---: | ---: |
-| Noisy (no filter) | 15.37 | 14.61 |
-| Median 5×5 | 15.88 | **36.09** |
-| Averaging 3×3 | **22.75** | 22.18 |
-| Gaussian 3×3 σ=1 | 22.71 | 22.09 |
-| Bilateral 5×5 | 17.37 | 14.72 |
+| Noise | Noisy (no filter) | Median 5×5 | Averaging 3×3 | Gaussian 3×3 σ=1 | Bilateral 5×5 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Gaussian σ=50 | 15.37 | 15.88 | **22.75** | 22.71 | 17.37 |
+| Impulse p=0.10 | 14.61 | **36.09** | 22.18 | 22.09 | 14.72 |
 
 ![denoising PSNR](results/chart_denoising_psnr.png)
 
