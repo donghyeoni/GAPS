@@ -25,8 +25,8 @@ and color conversion, and Matplotlib only for visualization.
 
 ## Results
 
-Both scripts run on the committed deterministic 512×512 synthetic test image
-([`results/input_synthetic.png`](results/input_synthetic.png)) with `--seed 0`,
+Both scripts run on the committed 512×512 test photo
+([`results/input_dog.png`](results/input_dog.png)) with `--seed 0`,
 so every number below is reproducible with the commands in **Usage**.
 
 ### 1. Denoising (PSNR, dB — higher is better)
@@ -36,19 +36,19 @@ specialty rather than a single cherry-picked pairing:
 
 | Filter | Gaussian σ=50 | Impulse p=0.10 |
 | --- | ---: | ---: |
-| Noisy (no filter) | 15.07 | 14.87 |
-| Median 5×5 | 15.60 | **38.03** |
-| Averaging 3×3 | **22.79** | 22.66 |
-| Gaussian 3×3 σ=1 | 22.60 | 22.46 |
-| Bilateral 5×5 | 17.12 | 14.94 |
+| Noisy (no filter) | 15.37 | 14.61 |
+| Median 5×5 | 15.88 | **36.09** |
+| Averaging 3×3 | **22.75** | 22.18 |
+| Gaussian 3×3 σ=1 | 22.71 | 22.09 |
+| Bilateral 5×5 | 17.37 | 14.72 |
 
 ![denoising PSNR](results/psnr_denoising.png)
 
 - The **median** filter (implemented with 0/255 impulse detection) is the clear
-  impulse-noise specialist: **+23.2 dB** over the noisy input, while leaving
+  impulse-noise specialist: **+21.5 dB** over the noisy input, while leaving
   Gaussian noise almost untouched.
 - **Linear smoothing** (averaging / Gaussian kernel) is the better choice for
-  Gaussian noise (~+7.6 dB) but cannot remove impulse outliers.
+  Gaussian noise (~+7.4 dB) but cannot remove impulse outliers.
 - The **bilateral** filter preserves edges by design; with a conservative range
   sigma it trades PSNR for edge sharpness on this heavy (σ=50) noise.
 
@@ -65,21 +65,21 @@ fills the gaps with sparse expand + neighborhood-weighted interpolation:
 
 | Pipeline | 256 level | 512 level |
 | --- | ---: | ---: |
-| Baseline (random patches + bilinear) | 35.07 | 27.82 |
-| **Ours / GAPS** (gradient patches + custom fill) | **40.89** | **30.20** |
+| Baseline (random patches + bilinear) | 28.01 | 23.39 |
+| **Ours / GAPS** (gradient patches + custom fill) | **33.30** | **26.60** |
 
 ![reconstruction PSNR](results/psnr_reconstruction.png)
 
-GAPS beats the equal-budget baseline at both pyramid levels: **+5.8 dB** at
-256 and **+2.4 dB** at 512.
+GAPS beats the equal-budget baseline at both pyramid levels: **+5.3 dB** at
+256 and **+3.2 dB** at 512.
 
 ## Test image
 
 The original report used two local test images (`lena.bmp` for denoising and a
 UAV frame `4611.png` for reconstruction); neither is redistributed here. To
-keep the pipeline reproducible with no external data, a deterministic 512×512
-synthetic image is committed at `results/input_synthetic.png` and used as the
-default input. You can still pass your own image:
+keep the pipeline reproducible with no external data, a 512×512 test photo
+(center-cropped and resized) is committed at `results/input_dog.png` and used
+as the default input. You can still pass your own image:
 
 ```bash
 python scripts/01_denoising.py --image data/your_image.png

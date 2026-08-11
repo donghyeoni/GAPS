@@ -41,8 +41,8 @@ from restoration import (
     gradient_choose,
 )
 
-# Default: the committed deterministic 512x512 synthetic test image.
-DEFAULT_IMAGE = os.path.join("results", "input_synthetic.png")
+# Default: the committed 512x512 test image.
+DEFAULT_IMAGE = os.path.join("results", "input_dog.png")
 
 # Patch (grid) size shared by both pipelines.
 K_BASE = 4

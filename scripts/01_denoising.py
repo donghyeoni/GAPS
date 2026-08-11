@@ -32,8 +32,8 @@ from restoration import (
     bilateral_filter,
 )
 
-# Default: the committed deterministic 512x512 synthetic test image.
-DEFAULT_IMAGE = os.path.join("results", "input_synthetic.png")
+# Default: the committed 512x512 test image.
+DEFAULT_IMAGE = os.path.join("results", "input_dog.png")
 
 
 def parse_args():

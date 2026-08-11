@@ -1,8 +1,8 @@
 PSNR (dB) -- higher is better:
                          Gaussian s=50    Impulse p=0.10
-  Noisy                          15.07             14.87
-  Median 5x5                     15.60             38.03
-  Averaging 3x3                  22.79             22.66
-  Gaussian 3x3 s=1               22.60             22.46
-  Bilateral 5x5                  17.12             14.94
+  Noisy                          15.37             14.61
+  Median 5x5                     15.88             36.09
+  Averaging 3x3                  22.75             22.18
+  Gaussian 3x3 s=1               22.71             22.09
+  Bilateral 5x5                  17.37             14.72
 Saved figure to results\01_denoising.png
