@@ -54,9 +54,28 @@ Visual comparison (top row: Gaussian noise, bottom row: impulse noise):
 ### 2. Bandwidth-limited reconstruction (PSNR, dB)
 
 Image pyramid 512 → 256 → 128 with an equal transmission budget per level
-(2¹⁴ pixels, 4×4 patches). GAPS selects patches by gradient energy — scored on
-the receiver-side upsample, so the selection needs no extra side channel — and
-fills the gaps with sparse expand + neighborhood-weighted interpolation:
+(2¹⁴ pixels, 4×4 patches).
+
+**Why this design** — the rationale behind GAPS:
+
+- **Spend the budget where interpolation fails.** Smooth regions are already
+  well approximated by upsampling the low-resolution base the receiver has,
+  so transmitting them wastes budget. Upsampling error concentrates at edges
+  and texture — exactly the regions with high gradient energy — so GAPS ranks
+  patches by gradient magnitude and transmits only the top-k, instead of a
+  random subset.
+- **No side channel needed.** Patch scores are computed on the *receiver-side
+  upsample* (the bilinear blow-up of the level below), which both ends can
+  reproduce identically. The sender never has to transmit which patches were
+  chosen — the selection itself costs zero extra bandwidth.
+- **Use every received pixel.** Plain bilinear reconstruction upsamples the
+  low-resolution base and ignores the transmitted high-resolution patches
+  right next to a gap. The custom forward fill (sparse expand +
+  neighborhood-weighted averaging) reconstructs each missing pixel from its
+  nearest actual measurements, whether they came from the base or from a
+  transmitted patch.
+
+Result — equal budget, better placement and better fill:
 
 | Pipeline | 256 level | 512 level |
 | --- | ---: | ---: |
