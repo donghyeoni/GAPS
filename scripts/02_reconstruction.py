@@ -15,7 +15,7 @@ Other patch selectors (frequency / Laplacian) are available in
 
 Usage
 -----
-    python scripts/02_reconstruction.py --seed 0
+    python scripts/02_reconstruction.py --seed 0 --save results/reconstruction_comparison.png
     python scripts/02_reconstruction.py --image data/your_uav_frame.png --patch-size 4
 """
 
@@ -69,6 +69,11 @@ def parse_args():
         default=None,
         help="Seed numpy RNG for reproducible random patch selection.",
     )
+    parser.add_argument(
+        "--save",
+        default=None,
+        help="Optional path to save a visual comparison figure (PNG).",
+    )
     return parser.parse_args()
 
 
@@ -83,7 +88,7 @@ def run_baseline(image_512, image_256, image_128, k):
 
     p1 = psnr(image_256, image_re_256)
     p2 = psnr(image_512, image_re_512)
-    return p1, p2
+    return p1, p2, image_re_512
 
 
 def run_ours(image_512, image_256, image_128, image_high_up, k):
@@ -103,7 +108,7 @@ def run_ours(image_512, image_256, image_128, image_high_up, k):
 
     p1 = psnr(image_256, image_re_256_m2)
     p2 = psnr(image_512, image_re_512_m2)
-    return p1, p2
+    return p1, p2, image_re_512_m2
 
 
 def main():
@@ -132,13 +137,38 @@ def main():
     print(f"Pyramid sizes: {image_512.shape} -> {image_256.shape} -> {image_128.shape}")
     print(f"Patch size: {args.patch_size}\n")
 
-    b1, b2 = run_baseline(image_512, image_256, image_128, args.patch_size)
-    o1, o2 = run_ours(image_512, image_256, image_128, image_high_up, args.patch_size)
+    b1, b2, base_512 = run_baseline(image_512, image_256, image_128, args.patch_size)
+    o1, o2, ours_512 = run_ours(image_512, image_256, image_128, image_high_up, args.patch_size)
 
     print("PSNR (dB) -- higher is better:")
     print(f"  {'':<10}{'256 level':>12}{'512 level':>12}")
     print(f"  {'Baseline':<10}{b1:>12.2f}{b2:>12.2f}")
     print(f"  {'Ours':<10}{o1:>12.2f}{o2:>12.2f}")
+
+    if args.save:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+
+        # Zoomed crop to make the reconstruction quality visible.
+        cy, cx, cs = 96, 112, 128
+        panels = [
+            ("Original", image_512, None),
+            ("Baseline (random + bilinear)", base_512, b2),
+            ("Ours / GAPS (gradient + custom fill)", ours_512, o2),
+        ]
+        fig, axes = plt.subplots(2, 3, figsize=(12, 8.6))
+        for col, (name, img, val) in enumerate(panels):
+            title = name if val is None else f"{name}\n{val:.2f} dB"
+            axes[0, col].imshow(img)
+            axes[0, col].set_title(title, fontsize=11)
+            axes[0, col].axis("off")
+            axes[1, col].imshow(img[cy : cy + cs, cx : cx + cs])
+            axes[1, col].set_title("zoom", fontsize=9)
+            axes[1, col].axis("off")
+        fig.tight_layout()
+        fig.savefig(args.save, dpi=150, bbox_inches="tight")
+        print(f"Saved figure to {args.save}")
 
 
 if __name__ == "__main__":

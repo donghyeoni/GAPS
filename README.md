@@ -47,10 +47,6 @@ specialty rather than a single cherry-picked pairing:
 - The **bilateral** filter preserves edges by design; with a conservative range
   sigma it trades PSNR for edge sharpness on this heavy (σ=50) noise.
 
-Visual comparison (top row: Gaussian noise, bottom row: impulse noise):
-
-![denoising figures](results/denoising_comparison.png)
-
 ### 2. Bandwidth-limited reconstruction (PSNR, dB)
 
 Image pyramid 512 → 256 → 128 with an equal transmission budget per level
@@ -84,6 +80,10 @@ Result — equal budget, better placement and better fill:
 
 GAPS beats the equal-budget baseline at both pyramid levels: **+5.3 dB** at
 256 and **+3.2 dB** at 512.
+
+Visual comparison at the 512 level (bottom row: zoomed crop):
+
+![reconstruction comparison](results/reconstruction_comparison.png)
 
 ## Test image
 
@@ -135,8 +135,8 @@ Requires Python 3.8+ and the packages in `requirements.txt`
 Reproduce the committed results (defaults to the committed test photo):
 
 ```bash
-python scripts/01_denoising.py --seed 0 --save results/denoising_comparison.png --no-show
-python scripts/02_reconstruction.py --seed 0
+python scripts/01_denoising.py --seed 0 --no-show
+python scripts/02_reconstruction.py --seed 0 --save results/reconstruction_comparison.png
 ```
 
 Using the library directly:

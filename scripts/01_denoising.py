@@ -7,7 +7,7 @@ filter's strength and weakness per noise type is visible.
 
 Usage
 -----
-    python scripts/01_denoising.py --seed 0 --save results/denoising_comparison.png --no-show
+    python scripts/01_denoising.py --seed 0 --no-show
     python scripts/01_denoising.py --image data/your_uav_frame.png
 """
 

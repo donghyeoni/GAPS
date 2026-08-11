@@ -1,7 +1,8 @@
-Pyramid sizes: (512, 512, 3) -> (256, 256, 3) -> (128, 128, 3)
+﻿Pyramid sizes: (512, 512, 3) -> (256, 256, 3) -> (128, 128, 3)
 Patch size: 4
 
 PSNR (dB) -- higher is better:
                256 level   512 level
   Baseline         28.01       23.39
   Ours             33.30       26.60
+Saved figure to results\reconstruction_comparison.png
