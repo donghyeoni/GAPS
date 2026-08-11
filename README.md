@@ -79,7 +79,14 @@ The original report used two local test images (`lena.bmp` for denoising and a
 UAV frame `4611.png` for reconstruction); neither is redistributed here. To
 keep the pipeline reproducible with no external data, a 512×512 test photo
 (center-cropped and resized) is committed at `results/input_dog.png` and used
-as the default input. You can still pass your own image:
+as the default input.
+
+> `results/input_dog.png` is the author's own photograph — © 2026 donghyeoni,
+> all rights reserved. It is included in this repository only as a benchmark
+> test input and is **not** covered by the MIT license, which applies to the
+> code.
+
+You can still pass your own image:
 
 ```bash
 python scripts/01_denoising.py --image data/your_image.png
