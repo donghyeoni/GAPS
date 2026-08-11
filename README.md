@@ -39,8 +39,6 @@ specialty rather than a single cherry-picked pairing:
 | Gaussian σ=50 | 15.37 | 15.88 | **22.75** | 22.71 | 17.37 |
 | Impulse p=0.10 | 14.61 | **36.09** | 22.18 | 22.09 | 14.72 |
 
-![denoising PSNR](results/chart_denoising_psnr.png)
-
 - The **median** filter (implemented with 0/255 impulse detection) is the clear
   impulse-noise specialist: **+21.5 dB** over the noisy input, while leaving
   Gaussian noise almost untouched.
