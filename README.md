@@ -73,11 +73,6 @@ number here is reproducible with the commands in **Usage**.
   nearest actual measurements, whether they came from the base or from a
   transmitted patch.
 
-Selected patches per level — what each method actually transmits
-(left: 128→256 stage, right: 256→512 stage):
-
-![patch selection](results/patch_selection.png)
-
 Every selection × fill combination under the same budget — each cell is
 `256 / 512` PSNR in dB; **random + bilinear is the baseline**, everything
 else is ours:
@@ -94,8 +89,10 @@ baseline by **+6.0 dB** at 256 and **+3.4 dB** at 512. Selection matters far
 more than the fill: gradient selection lifts every fill by ~5 dB, while
 fill choice moves the result by a few tenths.
 
-Reconstruction progression — from the 128 base to the final 512 image,
-baseline (top row) vs the best ours (bottom row):
+Pipeline progression — baseline (top row) vs the best ours (bottom row).
+Each row reads left to right:
+`128 base → interpolation → region select → merge (256) → interpolation →
+region select → merge (512, final)`:
 
 ![reconstruction progression](results/reconstruction_progression.png)
 
@@ -181,7 +178,7 @@ Reproduce the full Results table and figures (pure-Python loops — takes tens
 of minutes):
 
 ```bash
-python scripts/enhancement/benchmark.py --seed 0 --save results/reconstruction_progression.png --save-patches results/patch_selection.png
+python scripts/enhancement/benchmark.py --seed 0 --save results/reconstruction_progression.png
 ```
 
 Using the library directly:

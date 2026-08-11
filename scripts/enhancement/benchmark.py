@@ -33,25 +33,32 @@ def main():
     print(f"Pyramid sizes: {image_512.shape} -> {image_256.shape} -> {image_128.shape}")
     print(f"Patch size: {args.patch_size}\n")
 
+    if args.combos:
+        combos = [tuple(c.split("+")) for c in args.combos.split(",")]
+    else:
+        combos = [(s, f) for s in SELECTIONS for f in FILLS]
+
+    stages = bool(args.save)  # figures need the intermediate interpolations
     results = {}
-    for sel_name in SELECTIONS:
-        for fill_mode in FILLS:
-            results[(sel_name, fill_mode)] = run_pipeline(
-                sel_name, fill_mode, image_512, image_256, image_128,
-                image_high_up, args.patch_size, args.seed)
-            r = results[(sel_name, fill_mode)]
-            tag = " (baseline)" if (sel_name, fill_mode) == BASELINE else ""
-            print(f"  {sel_name:<10} + {fill_mode:<9} : "
-                  f"256 {r['p256']:6.2f}  512 {r['p512']:6.2f}{tag}")
+    for sel_name, fill_mode in combos:
+        results[(sel_name, fill_mode)] = run_pipeline(
+            sel_name, fill_mode, image_512, image_256, image_128,
+            image_high_up, args.patch_size, args.seed, stages=stages)
+        r = results[(sel_name, fill_mode)]
+        tag = " (baseline)" if (sel_name, fill_mode) == BASELINE else ""
+        print(f"  {sel_name:<10} + {fill_mode:<9} : "
+              f"256 {r['p256']:6.2f}  512 {r['p512']:6.2f}{tag}")
 
     # Summary table (256 / 512 per cell).
     print("\nPSNR (dB) -- selection x fill, '256 / 512', higher is better:")
     print(f"  {'':<11}" + "".join(f"{f:>16}" for f in FILLS))
     for sel_name in SELECTIONS:
+        if not any(k[0] == sel_name for k in results):
+            continue
         row = f"  {sel_name:<11}"
         for fill_mode in FILLS:
-            r = results[(sel_name, fill_mode)]
-            row += f"{r['p256']:7.2f} /{r['p512']:6.2f} "
+            r = results.get((sel_name, fill_mode))
+            row += f"{r['p256']:7.2f} /{r['p512']:6.2f} " if r else " " * 16
         print(row)
 
     # Best non-baseline combination by 512-level PSNR.
@@ -69,24 +76,29 @@ def main():
         import matplotlib.pyplot as plt
 
     if args.save:
-        # 128 -> 256 -> 512 progression, one row per method.
+        # Pipeline progression, one row per method, all panels the same size:
+        # 128 base -> interpolation -> region select -> merge (256)
+        #          -> interpolation -> region select -> merge (512, final)
         rows = [
             ("Baseline (random + bilinear)", base),
             (f"Ours ({best_key[0]} + {best_key[1]})", best),
         ]
-        fig, axes = plt.subplots(2, 3, figsize=(13, 8.4),
-                                 gridspec_kw={"width_ratios": [1, 2, 4]})
+        fig, axes = plt.subplots(2, 7, figsize=(21, 7.6))
         for r, (name, res) in enumerate(rows):
             panels = [
-                (image_128, f"{name}\n128 base (transmitted in full)"),
-                (res["re_256"], f"256 reconstruction\n{res['p256']:.2f} dB"),
-                (res["re_512"], f"512 reconstruction\n{res['p512']:.2f} dB"),
+                (image_128, f"{name}\n128x128 base"),
+                (res["up_256"], "interpolation\n(256)"),
+                (res["sel_256"], "region select\n(256, 1/4 budget)"),
+                (res["re_256"], f"merge -> 256\n{res['p256']:.2f} dB"),
+                (res["up_512"], "interpolation\n(512)"),
+                (res["sel_512"], "region select\n(512, 1/16 budget)"),
+                (res["re_512"], f"merge -> 512 final\n{res['p512']:.2f} dB"),
             ]
             for c, (img, title) in enumerate(panels):
                 axes[r, c].imshow(img)
                 axes[r, c].set_title(title, fontsize=10)
                 axes[r, c].axis("off")
-        fig.tight_layout()
+        fig.tight_layout(h_pad=3.0)
         fig.savefig(args.save, dpi=150, bbox_inches="tight")
         print(f"Saved figure to {args.save}")
 

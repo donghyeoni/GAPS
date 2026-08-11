@@ -25,6 +25,7 @@ from restoration import (  # noqa: E402
     psnr,
     downsampling,
     bilinear,
+    bicubic_upsampling,
     expand,
     assemble,
     restoration1,
@@ -67,12 +68,18 @@ def parse_args(description, with_figures=False):
         parser.add_argument(
             "--save",
             default=None,
-            help="Optional path to save the 128->256->512 progression figure (PNG).",
+            help="Optional path to save the pipeline progression figure (PNG).",
         )
         parser.add_argument(
             "--save-patches",
             default=None,
             help="Optional path to save the selected-patches figure (PNG).",
+        )
+        parser.add_argument(
+            "--combos",
+            default=None,
+            help="Comma-separated 'selection+fill' subset to run "
+                 "(e.g. 'random+bilinear,gradient+bicubic'; default: all).",
         )
     return parser.parse_args()
 
@@ -119,8 +126,17 @@ def fill(mode, lower, selected):
     return restoration3(combined)
 
 
+def upsample(mode, lower):
+    """The pure 2x interpolation each fill mode is built on (for figures)."""
+    if mode == "bilinear":
+        return bilinear(lower)
+    if mode == "bicubic":
+        return bicubic_upsampling(lower)
+    return restoration3(expand(lower))
+
+
 def run_pipeline(sel_name, fill_mode, image_512, image_256, image_128,
-                 image_high_up, patch_size, seed):
+                 image_high_up, patch_size, seed, stages=False):
     if seed is not None:
         np.random.seed(seed)  # identical random selections across pipelines
 
@@ -131,7 +147,7 @@ def run_pipeline(sel_name, fill_mode, image_512, image_256, image_128,
     sel_512 = select(sel_name, ref_512, image_512, patch_size)
     re_512 = fill(fill_mode, re_256, sel_512)
 
-    return {
+    out = {
         "p256": psnr(image_256, re_256),
         "p512": psnr(image_512, re_512),
         "re_256": re_256,
@@ -139,6 +155,10 @@ def run_pipeline(sel_name, fill_mode, image_512, image_256, image_128,
         "sel_256": sel_256,
         "sel_512": sel_512,
     }
+    if stages:  # intermediate interpolation panels for the progression figure
+        out["up_256"] = upsample(fill_mode, image_128)
+        out["up_512"] = ref_512 if fill_mode == "bilinear" else upsample(fill_mode, re_256)
+    return out
 
 
 def run_single(name, sel_name, fill_mode):
